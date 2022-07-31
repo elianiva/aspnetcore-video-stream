@@ -7,8 +7,8 @@
 html,
 body,
 #root {
-    height: 100%;
-    width: 100%;
+  height: 100%;
+  width: 100%;
 }
 
 .App {
@@ -21,32 +21,50 @@ body,
   gap: 2rem;
 }
 
-.start {
-    background-color: #3c3fe9;
-}
-
-.stop {
-    background-color: #e93c3c;
-}
-
 .button {
-    padding: 1rem 1.5rem;
-    border: none;
-    outline: none;
-    font-size: 1.25rem;
-    font-weight: bold;
-    color: #ffffff;
-    border-radius: 0.375rem;
-    cursor: pointer;
+  padding: 1rem 1.5rem;
+  border: none;
+  outline: none;
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #ffffff;
+  border-radius: 0.375rem;
+  cursor: pointer;
 }
 
 .button:hover {
-    filter: brightness(0.95)
+  filter: brightness(0.95);
+}
+
+.start {
+  background-color: #3c3fe9;
+}
+
+.stop {
+  background-color: #e93c3c;
+}
+
+.choose {
+  background-color: #5be097;
+  color: #242424;
 }
 
 .video {
-    background-color: #efefef;
-    width: 640px;
-    height: 360px;
-    border-radius: 0.375rem;
+  background-color: #efefef;
+  width: 640px;
+  height: 360px;
+  border-radius: 0.375rem;
+}
+
+.buttons {
+  display: flex;
+  gap: 1rem;
+}
+
+.source-selection {
+  outline: none;
+  border: 1px solid #ededed;
+  font-size: 1.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
 }
