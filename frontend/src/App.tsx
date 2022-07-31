@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { distinctUntilChanged, Subject, switchMap } from "rxjs";
+import { useEffect, useRef, useState } from "react";
+import { Subject } from "rxjs";
 import "./App.css";
 
 type VideoPayload = {
