@@ -1,25 +1,34 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { concatMap, Subject } from "rxjs";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { distinctUntilChanged, Subject, switchMap } from "rxjs";
 import "./App.css";
+
+type VideoPayload = {
+  id: string;
+  content: Blob;
+  startedAt: string;
+  stoppedAt: string;
+};
+
+const subject$ = new Subject<VideoPayload>();
+subject$.subscribe(async (payload) => {
+  const formData = new FormData();
+  formData.append("id", payload.id);
+  formData.append("startedAt", payload.startedAt);
+  formData.append("stoppedAt", payload.stoppedAt);
+  formData.append("file", payload.content, "video.webm");
+  await fetch("http://localhost:5000/videostream/upload", {
+    method: "POST",
+    headers: { "Content-Length": payload.content.size.toString() },
+    body: formData,
+  });
+});
 
 function guidGenerator() {
   const S4 = function () {
     return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
   };
-  return (
-    S4() +
-    S4() +
-    "-" +
-    S4() +
-    "-" +
-    S4() +
-    "-" +
-    S4() +
-    "-" +
-    S4() +
-    S4() +
-    S4()
-  );
+  // prettier-ignore
+  return (S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4());
 }
 
 function App() {
@@ -31,35 +40,6 @@ function App() {
   const [startedAt, setStartedAt] = useState<number>(new Date().getTime());
   const [videoSources, setVideoSources] = useState<InputDeviceInfo[]>([]);
   const [isAllowed, setAllowed] = useState(false);
-
-  const subject$ = useMemo(() => new Subject<Blob>(), []);
-  subject$
-    .pipe(
-      concatMap<Blob, Promise<[string, Blob]>>(async (data) => {
-        const filename = "video.webm";
-        const dataBuffer = await data.arrayBuffer();
-        const uint8buffer = new Uint8Array(dataBuffer);
-        const compressedBlob = new Blob([uint8buffer], {
-          type: "video/webm;codecs=opus,vp9",
-        });
-
-        return [filename, compressedBlob];
-      })
-    )
-    .subscribe(async ([filename, compressed]) => {
-      const formData = new FormData();
-      formData.append("id", id);
-      formData.append("startedAt", startedAt.toString());
-      formData.append("stoppedAt", Date.now().toString());
-      formData.append("file", compressed, filename);
-      await fetch("http://localhost:5000/videostream/upload", {
-        method: "POST",
-        headers: {
-          "Content-Length": compressed.size.toString(),
-        },
-        body: formData,
-      });
-    });
 
   async function getUserMedia(deviceId?: string) {
     return await navigator.mediaDevices.getUserMedia({
@@ -93,13 +73,18 @@ function App() {
       }
 
       mediaRecorder.current = new MediaRecorder(videoStream, {
-        mimeType: "video/webm;codecs=opus,vp9",
+        mimeType: "video/webm;codecs=vp9",
         videoBitsPerSecond: 200_000, // 0.2Mbits / sec
       });
-      mediaRecorder.current.start(5000); // send blob every 5   second
+      mediaRecorder.current.start(1000); // send blob every 5   second
       mediaRecorder.current.onstart = () => console.log("Start recording...");
       mediaRecorder.current.ondataavailable = async (e: BlobEvent) => {
-        subject$.next(e.data);
+        subject$.next({
+          id,
+          content: e.data,
+          startedAt: startedAt.toString(),
+          stoppedAt: Math.round(startedAt + e.timeStamp).toString(),
+        });
       };
 
       setStartedAt(new Date().getTime());
