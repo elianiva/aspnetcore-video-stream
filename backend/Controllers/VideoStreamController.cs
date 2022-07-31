@@ -24,15 +24,16 @@ public class VideoStreamController : ControllerBase
     }
 
     [HttpPost("upload")]
-    public async Task<IActionResult> Upload([FromForm] StreamingVideoRequest request, [FromForm] string id)
+    public async Task<IActionResult> Upload([FromForm] StreamingVideoRequest request)
     {
-        if (request.File == null) return BadRequest(new { Message = "File is required" });
-        if (request.StartedAt == null) return BadRequest(new { Message = "StartedAt is required" });
-        if (request.StoppedAt == null) return BadRequest(new { Message = "StoppedAt is required" });
+        if (request.File is null) return BadRequest(new { Message = "File is required" });
+        if (request.StartedAt is null) return BadRequest(new { Message = "StartedAt is required" });
+        if (request.StoppedAt is null) return BadRequest(new { Message = "StoppedAt is required" });
 
         string basePath = _hostingEnvironment.ContentRootPath;
         string extension = Path.GetExtension(request.File.FileName);
-        string filePath = Path.Combine(basePath, "Videos", id, $"{request.StartedAt}_{request.StoppedAt}{extension}").ToString();
+        string filePath = Path.Combine(basePath, "Videos", request.Id, $"{request.StartedAt}_{request.StoppedAt}{extension}").ToString();
+        Directory.CreateDirectory(Path.GetDirectoryName(filePath));
         using (var fileStream = new FileStream(filePath, FileMode.Create))
         {
             await request.File.CopyToAsync(fileStream);
