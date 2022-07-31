@@ -23,7 +23,7 @@ function guidGenerator() {
 }
 
 function App() {
-  const id = guidGenerator();
+  const [id] = useState<string>(guidGenerator());
   const videoElement = useRef<HTMLVideoElement | null>(null);
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
@@ -76,7 +76,8 @@ function App() {
     console.log("Checking permission...");
     // this is using the old way of checking permission since firefox doesn't support permissions API for camera
     try {
-      const _ = await getUserMedia();
+      const stream = await getUserMedia();
+      setVideoStream(stream);
       setAllowed(true);
     } catch (err: unknown) {
       setAllowed(false);
@@ -86,16 +87,16 @@ function App() {
 
   async function startStreamHandler() {
     try {
-      console.log("this is called");
-      const stream = await getUserMedia();
-      console.log("this passed through");
-      setVideoStream(stream);
+      if (videoStream === null) {
+        await acquirePermission();
+        return;
+      }
 
-      mediaRecorder.current = new MediaRecorder(stream, {
+      mediaRecorder.current = new MediaRecorder(videoStream, {
         mimeType: "video/webm;codecs=opus,vp9",
         videoBitsPerSecond: 200_000, // 0.2Mbits / sec
       });
-      mediaRecorder.current.start(1000); // send blob every second
+      mediaRecorder.current.start(5000); // send blob every 5   second
       mediaRecorder.current.onstart = () => console.log("Start recording...");
       mediaRecorder.current.ondataavailable = async (e: BlobEvent) => {
         subject$.next(e.data);
@@ -108,7 +109,7 @@ function App() {
         return;
       }
 
-      videoElement.current.srcObject = stream;
+      videoElement.current.srcObject = videoStream;
     } catch (err) {
       if (err instanceof Error) {
         if (err.message === "Permission denied") {

@@ -65,7 +65,7 @@ func (d *Deps) putListOfFilesToFile(id string, files []string) (string, error) {
 }
 
 func (d *Deps) concatFiles(id string, files []string) (string, error) {
-	outputFilePath := path.Join("../backend/Videos/"+id, "output.webm")
+	outputFilePath := path.Join("result", id, "output.webm")
 
 	f, err := os.Create(outputFilePath)
 	if err != nil {
