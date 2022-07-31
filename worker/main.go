@@ -55,19 +55,10 @@ func main() {
 			w.Write([]byte(err.Error()))
 			return
 		}
-		listFilePath, err := d.putListOfFilesToFile(id, files)
-		if err != nil {
-			log.Printf("error: generating file lists: %v", err)
-			w.WriteHeader(500)
-			w.Write([]byte(err.Error()))
-			return
-		}
 
-		outputCombinedWebmFile := path.Join("result", id, "combined.webm")
-
-		_, err = d.Ffmpeg.Concat(ctx, listFilePath, outputCombinedWebmFile)
+		outputCombinedWebmFile, err := d.concatFiles(id, files)
 		if err != nil {
-			log.Printf("error: combining files with ffmpeg: %v", err)
+			log.Printf("concatenating files: %v", err)
 			w.WriteHeader(500)
 			w.Write([]byte(err.Error()))
 			return

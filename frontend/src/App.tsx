@@ -2,12 +2,20 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { concatMap, Subject } from "rxjs";
 import "./App.css";
 
+function guidGenerator() {
+  const S4 = function () {
+    return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
+  };
+  return (S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4());
+}
+
 function App() {
   const videoElement = useRef<HTMLVideoElement | null>(null);
   const videoStream = useRef<MediaStream | null>(null);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const [isStreaming, setStreaming] = useState(false);
   const [startedAt, setStartedAt] = useState<number>(new Date().getTime());
+  const [id, setId] = useState<string>(guidGenerator());
 
   const subject$ = useMemo(() => new Subject<Blob>(), []);
   subject$
@@ -17,7 +25,7 @@ function App() {
         const dataBuffer = await data.arrayBuffer();
         const uint8buffer = new Uint8Array(dataBuffer);
         const compressedBlob = new Blob([uint8buffer], {
-          type: "video/webm;codecs=opus,vp8",
+          type: "video/webm;codecs=opus,vp9",
         });
 
         return [filename, compressedBlob];
@@ -25,7 +33,7 @@ function App() {
     )
     .subscribe(async ([filename, compressed]) => {
       const formData = new FormData();
-      formData.append("id", "79bd0a65-eaa3-4bd6-8e69-052d8ac56129");
+      formData.append("id", id);
       formData.append("startedAt", startedAt.toString());
       formData.append("stoppedAt", Date.now().toString());
       formData.append("file", compressed, filename);
@@ -52,7 +60,7 @@ function App() {
       videoStream.current = stream;
 
       mediaRecorder.current = new MediaRecorder(stream, {
-        mimeType: "video/webm;codecs=opus,vp8",
+        mimeType: "video/webm;codecs=opus,vp9",
         videoBitsPerSecond: 200_000, // 0.2Mbits / sec
       });
       mediaRecorder.current.start(1000); // send blob every second
