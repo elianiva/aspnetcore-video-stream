@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"io/fs"
 	"log"
 	"os"
@@ -61,4 +62,49 @@ func (d *Deps) putListOfFilesToFile(id string, files []string) (string, error) {
 	}
 
 	return filePath, nil
+}
+
+func (d *Deps) concatFiles(id string, files []string) (string, error) {
+	outputFilePath := path.Join("../backend/Videos/"+id, "output.webm")
+
+	f, err := os.Create(outputFilePath)
+	if err != nil {
+		return "", fmt.Errorf("creating file: %w", err)
+	}
+	defer func() {
+		err := f.Close()
+		if err != nil {
+			log.Printf("error closing file: %v", err)
+		}
+	}()
+
+	for _, file := range files {
+		r, err := os.Open(file)
+		if err != nil {
+			return "", fmt.Errorf("opening file: %w", err)
+		}
+		defer func() {
+			err := r.Close()
+			if err != nil {
+				log.Printf("error closing file: %v", err)
+			}
+		}()
+
+		body, err := io.ReadAll(r)
+		if err != nil {
+			return "", fmt.Errorf("reading file: %w", err)
+		}
+
+		_, err = f.Write(body)
+		if err != nil {
+			return "", fmt.Errorf("writing buffer to file: %w", err)
+		}
+	}
+
+	err = f.Sync()
+	if err != nil {
+		return "", fmt.Errorf("synchronizing file: %w", err)
+	}
+
+	return outputFilePath, nil
 }
