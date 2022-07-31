@@ -95,7 +95,12 @@ func (d *Deps) concatFiles(id string, files []string) (string, error) {
 			return "", fmt.Errorf("reading file: %w", err)
 		}
 
-		_, err = f.Write(body)
+		fileInfo, err := f.Stat()
+		if err != nil {
+			return "", fmt.Errorf("Can't read file status: %w", err)
+		}
+
+		_, err = f.WriteAt(body, fileInfo.Size())
 		if err != nil {
 			return "", fmt.Errorf("writing buffer to file: %w", err)
 		}
